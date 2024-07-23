@@ -1,44 +1,96 @@
 "use client";
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-  } from "@/components/ui/form";
-  import { Input } from "@/components/ui/input";
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Control } from "react-hook-form";
+import { FormFieldType } from "./forms/ClientForm";
+import Image from "next/image";
+import 'react-phone-number-input/style.css'
+import PhoneInput from 'react-phone-number-input'
+import { E164Number } from "libphonenumber-js/core";
 
-
-const CustomFormField = () => {
-  return (
-    <Form {...form}>
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1">
-      <section className="mb-12 space-y-4">
-        <h1 className="header">Bienvenido 👋</h1>
-        <p className="text-dark-700">Agenda tu primera cita</p>
-      </section>
-      <FormField
-        control={form.control}
-        name="username"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Username</FormLabel>
-            <FormControl>
-              <Input placeholder="shadcn" {...field} />
-            </FormControl>
-            <FormDescription>
-              This is your public display name.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <Button type="submit">Submit</Button>
-    </form>
-  </Form>
-  )
+interface CustomProp {
+  control: Control<any>;
+  fieldType: formFieldTypes;
+  name: string;
+  label?: string;
+  placeholder?: string;
+  iconSrc?: string;
+  iconAlt?: string;
+  disabled?: boolean;
+  dateFormat?: string;
+  showTimeSelect?: boolean;
+  children?: React.ReactNode;
+  renderSkeleton?: (field: any) => React.ReactNode;
 }
+const RenderField = ({ field, props }: { field: any; props: CustomProp }) => {
+  const { fieldType, iconSrc, iconAlt, placeholder } = props;
 
-export default CustomFormField
+  switch (fieldType) {
+    case FormFieldType.INPUT:
+      return (
+        <div className="flex rounded-md border border-dark-500 bg-dark-400">
+          {iconSrc && (
+            <Image
+              src={iconSrc}
+              height={24}
+              width={24}
+              alt={iconAlt || "icon"}
+              className="ml-2"
+            />
+          )}
+          <FormControl>
+            <Input
+              className="shad-input border-0"
+              placeholder={placeholder}
+              {...field}
+            />
+          </FormControl>
+        </div>
+      );
+
+    case FormFieldType.PHONE_INPUT:
+      return <FormControl>
+        <PhoneInput
+            defaultCountry="AR"
+            placeholder={placeholder}
+            international
+            withCountryCallingCode
+            value={field.value as E164Number | undefined}
+            onChange={field.onChange}
+            className="input-phone"
+        />
+      </FormControl>;
+    default:
+      break;
+  }
+};
+
+const CustomFormField = (props: CustomProp) => {
+  const { control, fieldType, name, label } = props;
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex-1">
+          {fieldType !== FormFieldType.CHECKBOX && label && (
+            <FormLabel>{label}</FormLabel>
+          )}
+
+          <RenderField field={field} props={props} />
+
+          <FormMessage className="shad-error" />
+        </FormItem>
+      )}
+    />
+  );
+};
+
+export default CustomFormField;
